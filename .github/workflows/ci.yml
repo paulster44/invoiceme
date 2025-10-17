@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter backend prisma generate
+      - run: pnpm -r build
+      - run: pnpm -r test
+        env:
+          DATABASE_URL: file:./tests/ci.db
+          DATABASE_PROVIDER: sqlite
+          JWT_SECRET: ci-secret
+          PORT: 0
+          CORS_ORIGIN: http://localhost:5173
