@@ -1,0 +1,25 @@
+name: "No binary assets"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  guard-binaries:
+    name: Block binary files in PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+
+      - name: Ensure no binary files were added
+        run: |
+          set -euo pipefail
+          chmod +x scripts/check-no-binaries.sh
+          ./scripts/check-no-binaries.sh remote "origin/${{ github.event.pull_request.base.ref }}"
