@@ -6,3 +6,4 @@ build
 .gitignore
 *.log
 *.sqlite
+scripts/*.log

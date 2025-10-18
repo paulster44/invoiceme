@@ -1,39 +1,37 @@
-# ---------- build ----------
+# ---------- build stage ----------
 FROM node:20-alpine AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
 
-# cache-friendly layer: workspace descriptors first
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
-COPY backend/package.json backend/
-COPY frontend/package.json frontend/
-
+# Build frontend
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile
+COPY frontend ./
+RUN pnpm build
 
-# now copy source
-COPY . .
+# Build backend
+WORKDIR /app/backend
+COPY backend/package.json backend/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
+COPY backend ./
+# If Prisma exists, generate client (ignore if prisma not present)
+RUN [ -f "prisma/schema.prisma" ] && pnpm prisma generate || true
+RUN pnpm build
 
-# build prisma client + apps (use path filters so it works even if names change)
-RUN pnpm --filter ./backend prisma:generate
-RUN pnpm --filter ./frontend build
-RUN pnpm --filter ./backend build
-RUN pnpm --filter ./backend deploy --prod /app/backend-deploy
-
-# ---------- runtime ----------
+# ---------- runtime stage ----------
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# backend runtime
+# Copy backend runtime
+COPY --from=build /app/backend/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./dist
+# Prisma schema (if present)
 COPY --from=build /app/backend/prisma ./prisma
-COPY --from=build /app/backend-deploy/node_modules ./node_modules
-COPY --from=build /app/backend-deploy/package.json ./
-COPY --from=build /app/backend-deploy/pnpm-lock.yaml ./pnpm-lock.yaml
-
-# serve frontend statically from backend
+# Static assets from frontend build
 COPY --from=build /app/frontend/dist ./public
 
 EXPOSE 8080
-CMD ["node", "dist/index.js"]
+CMD ["node","dist/index.js"]
