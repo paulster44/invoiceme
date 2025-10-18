@@ -1,5 +1,6 @@
 # BareBones Invoice
 
+
 > Quickstart (10 lines max):
 > 1. `corepack enable && pnpm install`
 > 2. Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `frontend/.env`
@@ -157,6 +158,7 @@ GitHub Actions (`.github/workflows/ci.yml`) installs dependencies, builds, and r
 ### Local testing
 
 Run the full suite locally with `pnpm -r test` once package-level test scripts are in place.
+GitHub Actions (`.github/workflows/ci.yml`) installs dependencies, builds, and runs backend tests on pushes and PRs.
 
 ---
 Built with ❤️ as a minimal yet production-ready invoicing foundation.
