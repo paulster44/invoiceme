@@ -3,5 +3,5 @@
   "compilerOptions": {
     "jsx": "react-jsx"
   },
-  "include": ["src", "vite.config.ts", "src/service-worker.ts"]
+  "include": ["src", "vite.config.ts"]
 }
