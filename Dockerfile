@@ -3,19 +3,20 @@ FROM node:20-alpine AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
 
-# Build frontend
+# --- Build frontend ---
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+COPY frontend/package.json ./
+# lockfile optional; install must not fail if it's missing
+RUN pnpm install --no-frozen-lockfile
 COPY frontend ./
 RUN pnpm build
 
-# Build backend
+# --- Build backend ---
 WORKDIR /app/backend
-COPY backend/package.json backend/pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+COPY backend/package.json ./
+RUN pnpm install --no-frozen-lockfile
 COPY backend ./
-# If Prisma exists, generate client (ignore if prisma not present)
+# If Prisma exists, generate client (ignore if not present)
 RUN [ -f "prisma/schema.prisma" ] && pnpm prisma generate || true
 RUN pnpm build
 
@@ -25,12 +26,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy backend runtime
+# Copy backend runtime and public assets
 COPY --from=build /app/backend/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./dist
-# Prisma schema (if present)
 COPY --from=build /app/backend/prisma ./prisma
-# Static assets from frontend build
 COPY --from=build /app/frontend/dist ./public
 
 EXPOSE 8080
