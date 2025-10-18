@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  api:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      JWT_SECRET: super-secret
+      DATABASE_PROVIDER: postgresql
+      DATABASE_URL: postgresql://invoiceme:invoiceme@postgres:5432/invoiceme
+      CORS_ORIGIN: http://localhost:5173
+    depends_on:
+      - postgres
+    command: >
+      sh -c "pnpm --filter backend prisma migrate deploy && pnpm --filter backend start"
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: invoiceme
+      POSTGRES_USER: invoiceme
+      POSTGRES_PASSWORD: invoiceme
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
