@@ -152,7 +152,11 @@ curl "http://localhost:4000/api/reports/summary.csv?from=2024-01-01&to=2024-12-3
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) installs dependencies, builds, and runs backend tests on pushes and PRs.
+GitHub Actions (`.github/workflows/ci.yml`) installs dependencies, builds, and runs backend tests on pushes and PRs. In the Codex sandbox, the fallback `pnpm`-optional runner (`node scripts/codex-test-runner.js`) skips package tests when Corepack cannot prepare pnpm, while still emitting basic Node/npm smoke checks.
+
+### Local testing
+
+Run the full suite locally with `pnpm -r test` once package-level test scripts are in place.
 
 ---
 Built with ❤️ as a minimal yet production-ready invoicing foundation.
