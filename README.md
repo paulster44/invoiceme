@@ -1,5 +1,6 @@
 # BareBones Invoice
 
+
 > Quickstart (10 lines max):
 > 1. `corepack enable && pnpm install`
 > 2. Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `frontend/.env`
