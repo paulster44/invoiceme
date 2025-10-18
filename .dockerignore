@@ -1,0 +1,8 @@
+node_modules
+dist
+build
+.pnpm-store
+.git
+.gitignore
+*.log
+*.sqlite
