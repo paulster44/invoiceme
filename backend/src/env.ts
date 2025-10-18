@@ -11,8 +11,8 @@ required.forEach((key) => {
 export const env = {
   databaseUrl: process.env.DATABASE_URL!,
   databaseProvider: process.env.DATABASE_PROVIDER ?? 'sqlite',
-  port: Number(process.env.PORT ?? 4000),
+  port: Number(process.env.PORT ?? 8080),
   jwtSecret: process.env.JWT_SECRET!,
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
-  reportBaseUrl: process.env.REPORT_BASE_URL ?? 'http://localhost:4000'
+  reportBaseUrl: process.env.REPORT_BASE_URL ?? 'http://localhost:8080'
 };

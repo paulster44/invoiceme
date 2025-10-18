@@ -1,5 +1,5 @@
 # BareBones Invoice
-#ppp
+
 
 > Quickstart (10 lines max):
 > 1. `corepack enable && pnpm install`
