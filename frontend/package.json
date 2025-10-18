@@ -1,10 +1,11 @@
 {
-  "name": "@app/frontend",
+  "name": "barebones-invoice-frontend",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest"
   },

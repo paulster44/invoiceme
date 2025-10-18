@@ -26,16 +26,11 @@ export const buildApp = async () => {
   });
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const staticRootCandidates = [
-    path.resolve(process.cwd(), 'public'),
-    path.resolve(__dirname, '../../frontend/dist')
-  ];
-  const staticRoot = staticRootCandidates.find((candidate) => fs.existsSync(candidate));
-
-  if (staticRoot) {
+  const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+  if (fs.existsSync(frontendDist)) {
     await app.register(fastifyStatic, {
-      root: staticRoot,
-      prefix: '/'
+      root: frontendDist,
+      prefix: '/' 
     });
     app.setNotFoundHandler((request, reply) => {
       if (request.raw.method === 'GET') {
@@ -45,8 +40,6 @@ export const buildApp = async () => {
       }
     });
   }
-
-  app.get('/healthz', async () => ({ ok: true }));
 
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(meRoutes, { prefix: '/api' });
