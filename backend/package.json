@@ -3,37 +3,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
     "build": "tsc -p .",
-    "start": "node dist/index.js",
-    "prisma": "prisma",
-    "prisma:generate": "prisma generate",
-    "migrate": "prisma migrate dev",
-    "test": "vitest"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "dev": "tsx src/index.ts",
+    "prisma": "prisma"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
     "@fastify/jwt": "^8.0.1",
-    "@fastify/rate-limit": "^8.0.0",
-    "@fastify/static": "^7.0.1",
-    "@prisma/client": "^5.14.0",
+    "@fastify/rate-limit": "^8.1.1",
+    "@fastify/static": "^7.0.4",
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
-    "csv-stringify": "^6.4.0",
+    "csv-stringify": "^6.6.0",
     "date-fns": "^3.6.0",
-    "fastify": "^4.26.2",
+    "fastify": "^4.29.1",
     "fastify-plugin": "^4.5.1",
-    "pdfmake": "^0.2.10",
-    "prisma": "^5.14.0",
-    "zod": "^3.22.4"
+    "pdfmake": "^0.2.20",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.2",
-    "@types/node": "^20.11.30",
-    "tsx": "^4.7.1",
-    "typescript": "^5.4.2",
-    "vitest": "^1.5.0"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.19.22",
+    "@types/pdfmake": "^0.2.9",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
   }
 }

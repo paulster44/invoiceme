@@ -1,4 +1,4 @@
-import { Invoice, InvoiceItem, Payment } from '@prisma/client';
+import type { Invoice, InvoiceItem, Payment } from '@prisma/client';
 
 type TaxConfig = Record<string, number>;
 
