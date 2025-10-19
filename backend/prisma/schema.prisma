@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  businessName  String?
+  currency      String   @default("CAD")
+  taxSettings   Json?
+  invoicePrefix String   @default("INV-")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  clients       Client[]
+  invoices      Invoice[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  number      String
+  issueDate   DateTime
+  dueDate     DateTime?
+  status      String
+  currency    String      @default("CAD")
+  discountPct Float?
+  discountAmt Float?
+  shippingAmt Float?
+  taxConfig   Json?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@unique([userId, number])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  taxable     Boolean  @default(true)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+  date      DateTime
+  amount    Float
+  method    String
+  notes     String?
+}
