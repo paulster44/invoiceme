@@ -19,7 +19,7 @@ const clientsRoutes: FastifyPluginAsync = async (app) => {
     const search = (request.query as Record<string, string | undefined>).search ?? '';
     const clients = await app.prisma.client.findMany({
       where: {
-        userId: (request.user as any).id,
+        userId: request.user.id,
         OR: search
           ? [
               { name: { contains: search, mode: 'insensitive' } },
@@ -42,7 +42,7 @@ const clientsRoutes: FastifyPluginAsync = async (app) => {
         phone: sanitize(data.phone),
         address: sanitize(data.address),
         notes: sanitize(data.notes),
-        userId: (request.user as any).id
+        userId: request.user.id
       }
     });
   });
@@ -50,7 +50,7 @@ const clientsRoutes: FastifyPluginAsync = async (app) => {
   app.put('/clients/:id', async (request, reply) => {
     const data = clientSchema.partial().parse(request.body);
     const { id } = request.params as { id: string };
-    const existing = await app.prisma.client.findFirst({ where: { id, userId: (request.user as any).id } });
+    const existing = await app.prisma.client.findFirst({ where: { id, userId: request.user.id } });
     if (!existing) {
       return reply.code(404).send({ message: 'Client not found' });
     }
@@ -69,7 +69,7 @@ const clientsRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete('/clients/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const existing = await app.prisma.client.findFirst({ where: { id, userId: (request.user as any).id } });
+    const existing = await app.prisma.client.findFirst({ where: { id, userId: request.user.id } });
     if (!existing) {
       return reply.code(404).send({ message: 'Client not found' });
     }

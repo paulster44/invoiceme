@@ -60,7 +60,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
     const { status, clientId, from, to, search } = request.query as Record<string, string | undefined>;
     const invoices = await app.prisma.invoice.findMany({
       where: {
-        userId: (request.user as any).id,
+        userId: request.user.id,
         status: status ? status : undefined,
         clientId: clientId ?? undefined,
         issueDate: from || to ? {
@@ -96,7 +96,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
   app.post('/invoices', async (request, reply) => {
     const data = invoiceSchema.parse(request.body);
-    const user = await app.prisma.user.findUnique({ where: { id: (request.user as any).id } });
+    const user = await app.prisma.user.findUnique({ where: { id: request.user.id } });
     if (!user) {
       return reply.code(400).send({ message: 'User missing' });
     }
@@ -138,7 +138,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/invoices/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const invoice = await toResponse(id, (request.user as any).id);
+    const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
     return invoice;
   });
@@ -146,7 +146,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
   app.put('/invoices/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const data = invoiceSchema.partial().parse(request.body);
-    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: (request.user as any).id }, include: { items: true } });
+    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id }, include: { items: true } });
     if (!existing) return reply.code(404).send({ message: 'Invoice not found' });
 
     await app.prisma.invoice.update({
@@ -177,14 +177,14 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
           : undefined
       }
     });
-    const invoice = await toResponse(id, (request.user as any).id);
+    const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
     return invoice;
   });
 
   app.delete('/invoices/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: (request.user as any).id } });
+    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id } });
     if (!existing) return reply.code(404).send({ message: 'Invoice not found' });
     await app.prisma.invoice.delete({ where: { id } });
     reply.code(204).send();
@@ -201,7 +201,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       })
       .parse(request.body);
 
-    const invoice = await app.prisma.invoice.findFirst({ where: { id, userId: (request.user as any).id } });
+    const invoice = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id } });
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
     const payment = await app.prisma.payment.create({
       data: {
@@ -218,7 +218,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
   app.delete('/payments/:paymentId', async (request, reply) => {
     const { paymentId } = request.params as { paymentId: string };
     const existing = await app.prisma.payment.findFirst({
-      where: { id: paymentId, invoice: { userId: (request.user as any).id } }
+      where: { id: paymentId, invoice: { userId: request.user.id } }
     });
     if (!existing) return reply.code(404).send({ message: 'Payment not found' });
     await app.prisma.payment.delete({ where: { id: paymentId } });
@@ -227,7 +227,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/invoices/:id/pdf', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const invoice = await toResponse(id, (request.user as any).id);
+    const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
 
     const fonts = {
@@ -300,7 +300,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
   app.post('/invoices/:id/email', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const invoice = await toResponse(id, (request.user as any).id);
+    const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
     app.log.info({
       action: 'email-invoice',

@@ -59,13 +59,13 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/reports/summary', async (request) => {
     const { from, to } = request.query as Record<string, string | undefined>;
-    const data = await fetchData((request.user as any).id, from, to);
+    const data = await fetchData(request.user.id, from, to);
     return data;
   });
 
   app.get('/reports/summary.csv', async (request, reply) => {
     const { from, to } = request.query as Record<string, string | undefined>;
-    const { rows, summary } = await fetchData((request.user as any).id, from, to);
+    const { rows, summary } = await fetchData(request.user.id, from, to);
     const taxLabels = Object.keys(summary.taxes);
     const tax1 = taxLabels[0] ?? 'GST';
     const tax2 = taxLabels[1] ?? 'QST';
@@ -91,7 +91,7 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/reports/summary.pdf', async (request, reply) => {
     const { from, to } = request.query as Record<string, string | undefined>;
-    const { rows, summary } = await fetchData((request.user as any).id, from, to);
+    const { rows, summary } = await fetchData(request.user.id, from, to);
     const fonts = {
       Roboto: {
         normal: 'Roboto-Regular.ttf',
