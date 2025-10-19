@@ -255,7 +255,9 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       ])
     ];
 
-    const taxes = Object.entries(invoice.totals.taxes).map(([label, amount]) => `${label}: $${amount.toFixed(2)}`);
+    const taxes = Object.entries(invoice.totals.taxes).map(
+      ([label, amount]) => `${label}: $${Number(amount as any).toFixed(2)}`
+    );
 
     const docDefinition = {
       content: [
@@ -268,13 +270,13 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
         { table: { body: itemsTable } },
         { text: 'Totals', style: 'subheader', margin: [0, 20, 0, 0] },
         { ul: [
-          `Subtotal: $${invoice.totals.subtotal.toFixed(2)}`,
-          `Discount: $${invoice.totals.discount.toFixed(2)}`,
+          `Subtotal: $${Number(invoice.totals.subtotal as any).toFixed(2)}`,
+          `Discount: $${Number(invoice.totals.discount as any).toFixed(2)}`,
           ...taxes,
-          `Shipping: $${invoice.totals.shipping.toFixed(2)}`,
-          `Total: $${invoice.totals.total.toFixed(2)}`,
-          `Payments: $${invoice.totals.payments.toFixed(2)}`,
-          `Balance: $${invoice.totals.balance.toFixed(2)}`
+          `Shipping: $${Number(invoice.totals.shipping as any).toFixed(2)}`,
+          `Total: $${Number(invoice.totals.total as any).toFixed(2)}`,
+          `Payments: $${Number(invoice.totals.payments as any).toFixed(2)}`,
+          `Balance: $${Number(invoice.totals.balance as any).toFixed(2)}`
         ] }
       ],
       styles: {

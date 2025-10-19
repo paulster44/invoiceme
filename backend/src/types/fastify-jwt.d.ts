@@ -1,5 +1,4 @@
-/// <reference types="node" />
-import '@fastify/jwt'
+import '@fastify/jwt';
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {

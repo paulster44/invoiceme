@@ -41,17 +41,20 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
         acc.discount += row.discount;
         acc.shipping += row.shipping;
         Object.entries(row.taxes).forEach(([label, amount]) => {
-          acc.taxes[label] = (acc.taxes[label] ?? 0) + amount;
+          acc.taxes[label] = (acc.taxes[label] ?? 0) + Number((amount as any) ?? 0);
         });
-        acc.total += row.total;
-        acc.payments += row.payments;
-        acc.balance += row.balance;
+        acc.total += Number(row.total as any);
+        acc.payments += Number(row.payments as any);
+        acc.balance += Number(row.balance as any);
         return acc;
       },
       { subtotal: 0, discount: 0, shipping: 0, taxes: {} as Record<string, number>, total: 0, payments: 0, balance: 0 }
     );
 
-    const taxTotal = Object.values(summary.taxes).reduce((acc, amount) => acc + amount, 0);
+    const taxTotal = Object.values(summary.taxes).reduce(
+      (acc, amount) => acc + Number((amount as any) ?? 0),
+      0
+    );
     const netIncome = summary.total - taxTotal;
 
     return { rows, summary: { ...summary, taxTotal, netIncome } };
@@ -74,14 +77,14 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
       row.date,
       row.number,
       row.client,
-      row.subtotal.toFixed(2),
+      Number(row.subtotal as any).toFixed(2),
       tax1,
-      (row.taxes[tax1] ?? 0).toFixed(2),
+      Number((row.taxes[tax1] as any) ?? 0).toFixed(2),
       tax2,
-      (row.taxes[tax2] ?? 0).toFixed(2),
-      row.total.toFixed(2),
-      row.payments.toFixed(2),
-      row.balance.toFixed(2)
+      Number((row.taxes[tax2] as any) ?? 0).toFixed(2),
+      Number(row.total as any).toFixed(2),
+      Number(row.payments as any).toFixed(2),
+      Number(row.balance as any).toFixed(2)
     ]);
     const csv = stringify([header, ...csvRows]);
     reply.header('Content-Type', 'text/csv');
@@ -113,15 +116,15 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
         row.date,
         row.number,
         row.client,
-        `$${row.subtotal.toFixed(2)}`,
-        `$${row.discount.toFixed(2)}`,
-        `$${row.shipping.toFixed(2)}`,
+        `$${Number(row.subtotal as any).toFixed(2)}`,
+        `$${Number(row.discount as any).toFixed(2)}`,
+        `$${Number(row.shipping as any).toFixed(2)}`,
         Object.entries(row.taxes)
-          .map(([label, amount]) => `${label}: $${amount.toFixed(2)}`)
+          .map(([label, amount]) => `${label}: $${Number(amount as any).toFixed(2)}`)
           .join('\n'),
-        `$${row.total.toFixed(2)}`,
-        `$${row.payments.toFixed(2)}`,
-        `$${row.balance.toFixed(2)}`
+        `$${Number(row.total as any).toFixed(2)}`,
+        `$${Number(row.payments as any).toFixed(2)}`,
+        `$${Number(row.balance as any).toFixed(2)}`
       ])
     ];
 
@@ -139,15 +142,17 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
         { text: 'Totals', style: 'subheader', margin: [0, 20, 0, 0] },
         {
           ul: [
-            `Subtotal: $${summary.subtotal.toFixed(2)}`,
-            `Discount: $${summary.discount.toFixed(2)}`,
-            ...Object.entries(summary.taxes).map(([label, amount]) => `${label}: $${amount.toFixed(2)}`),
-            `Shipping: $${summary.shipping.toFixed(2)}`,
-            `Total: $${summary.total.toFixed(2)}`,
-            `Tax Total: $${summary.taxTotal.toFixed(2)}`,
-            `Net Income: $${summary.netIncome.toFixed(2)}`,
-            `Payments: $${summary.payments.toFixed(2)}`,
-            `Balance: $${summary.balance.toFixed(2)}`
+            `Subtotal: $${Number(summary.subtotal as any).toFixed(2)}`,
+            `Discount: $${Number(summary.discount as any).toFixed(2)}`,
+            ...Object.entries(summary.taxes).map(
+              ([label, amount]) => `${label}: $${Number(amount as any).toFixed(2)}`
+            ),
+            `Shipping: $${Number(summary.shipping as any).toFixed(2)}`,
+            `Total: $${Number(summary.total as any).toFixed(2)}`,
+            `Tax Total: $${Number(summary.taxTotal as any).toFixed(2)}`,
+            `Net Income: $${Number(summary.netIncome as any).toFixed(2)}`,
+            `Payments: $${Number(summary.payments as any).toFixed(2)}`,
+            `Balance: $${Number(summary.balance as any).toFixed(2)}`
           ]
         }
       ],
