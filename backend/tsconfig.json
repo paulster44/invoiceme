@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "./dist",
+    "module": "ES2022",
+    "moduleResolution": "Node",
+    "outDir": "dist",
     "rootDir": "./",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "strict": false,
-    "noImplicitAny": false,
+    "strict": true,
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src", "prisma/seed.ts"],
-  "exclude": ["tests", "**/*.test.ts"]
+  "include": ["src", "tests", "prisma"],
+  "exclude": []
 }
