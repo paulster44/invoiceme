@@ -163,19 +163,28 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
     };
 
     const pdfDoc = printer.createPdfKitDocument(docDefinition as any);
-    const chunks: Buffer[] = [];
-    return await new Promise<void>((resolve) => {
-      pdfDoc.on('data', (chunk) => chunks.push(chunk));
-      pdfDoc.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        reply.header('Content-Type', 'application/pdf');
-        reply.header('Content-Disposition', 'attachment; filename="summary.pdf"');
-        reply.send(buffer);
-        resolve();
-      });
-      pdfDoc.end();
-    });
+const chunks: Buffer[] = [];
+
+return await new Promise<void>((resolve, reject) => {
+  pdfDoc.on('data', (chunk: Buffer) => {
+    chunks.push(chunk);
   });
-};
+
+  pdfDoc.on('end', () => {
+    const buffer = Buffer.concat(chunks);
+    reply.header('Content-Type', 'application/pdf');
+    reply.header('Content-Disposition', 'attachment; filename="summary.pdf"');
+    reply.send(buffer);
+    resolve();
+  });
+
+  pdfDoc.on('error', (err: unknown) => {
+    request.log.error({ err }, 'pdf generation failed');
+    reject(err);
+  });
+
+  pdfDoc.end();
+});
+
 
 export default reportsRoutes;
