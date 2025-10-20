@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { FastifyPluginAsync } from 'fastify';
 
 const meRoutes: FastifyPluginAsync = async (app) => {
@@ -16,14 +17,27 @@ const meRoutes: FastifyPluginAsync = async (app) => {
 
   app.put('/settings', { preHandler: [app.authenticate] }, async (request) => {
     const body = request.body as Record<string, unknown>;
+
+    const updateData: {
+      businessName?: string;
+      currency?: string;
+      invoicePrefix?: string;
+      taxSettings?: Prisma.InputJsonValue;
+    } = {
+      businessName: body.businessName as string | undefined,
+      currency: body.currency as string | undefined,
+      invoicePrefix: body.invoicePrefix as string | undefined
+    };
+
+    if (body.taxSettings !== undefined) {
+      const raw = (body.taxSettings ?? {}) as Record<string, unknown>;
+      const safeJson: Prisma.InputJsonValue = raw as unknown as Prisma.InputJsonValue;
+      updateData.taxSettings = safeJson;
+    }
+
     const updated = await app.prisma.user.update({
       where: { id: request.user.id },
-      data: {
-        businessName: body.businessName as string | undefined,
-        currency: body.currency as string | undefined,
-        invoicePrefix: body.invoicePrefix as string | undefined,
-        taxSettings: body.taxSettings ?? undefined
-      }
+      data: updateData
     });
     return {
       id: updated.id,
