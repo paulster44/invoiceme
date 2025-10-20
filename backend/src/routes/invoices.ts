@@ -285,20 +285,15 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       }
     };
 
-    const pdfDoc = printer.createPdfKitDocument(docDefinition as any);
     const chunks: Buffer[] = [];
-    return await new Promise<void>((resolve) => {
-      pdfDoc.on('data', (chunk) => chunks.push(chunk));
-      pdfDoc.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        reply.header('Content-Type', 'application/pdf');
-        reply.header('Content-Disposition', `inline; filename="${invoice.number}.pdf"`);
-        reply.send(buffer);
-        resolve();
-      });
-      pdfDoc.end();
-    });
-  });
+doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+doc.on('end', () => {
+  const pdf = Buffer.concat(chunks);
+  reply.header('Content-Type', 'application/pdf');
+  reply.send(pdf);
+});
+doc.end();
+
 
   app.post('/invoices/:id/email', async (request, reply) => {
     const { id } = request.params as { id: string };
