@@ -46,6 +46,8 @@ export const buildApp = async () => {
     });
   }
 
+  app.get('/healthz', async () => ({ ok: true }));
+
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(meRoutes, { prefix: '/api' });
   await app.register(clientRoutes, { prefix: '/api' });
