@@ -56,3 +56,7 @@ export const buildApp = async () => {
 
   return app;
 };
+
+const app = await buildApp();
+
+export default app;
