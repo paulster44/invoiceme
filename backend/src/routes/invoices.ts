@@ -4,7 +4,8 @@ import { computeInvoiceTotals, nextInvoiceNumber, resolveStatus } from '../utils
 import PdfPrinter from 'pdfmake';
 import { env } from '../env.js';
 
-const sanitize = (value: string | null | undefined) => (typeof value === 'string' ? value.trim() : undefined);
+const sanitize = (value: string | null | undefined) =>
+  (typeof value === 'string' ? value.trim() : undefined);
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -44,29 +45,36 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       include: { items: true, payments: true, client: true, user: true }
     });
     if (!invoice) return null;
-    const totals = computeInvoiceTotals(invoice, invoice.taxConfig as Record<string, number> ?? {});
+
+    const totals = computeInvoiceTotals(
+      invoice,
+      (invoice.taxConfig as Record<string, number>) ?? {}
+    );
     const status = resolveStatus(invoice, totals);
+
     if (status !== invoice.status) {
       await app.prisma.invoice.update({ where: { id: invoice.id }, data: { status } });
       invoice.status = status;
     }
-    return {
-      ...invoice,
-      totals
-    };
+    return { ...invoice, totals };
   };
 
   app.get('/invoices', async (request) => {
-    const { status, clientId, from, to, search } = request.query as Record<string, string | undefined>;
+    const { status, clientId, from, to, search } =
+      request.query as Record<string, string | undefined>;
+
     const invoices = await app.prisma.invoice.findMany({
       where: {
         userId: request.user.id,
         status: status ? status : undefined,
         clientId: clientId ?? undefined,
-        issueDate: from || to ? {
-          gte: from ? new Date(from) : undefined,
-          lte: to ? new Date(to) : undefined
-        } : undefined,
+        issueDate:
+          from || to
+            ? {
+                gte: from ? new Date(from) : undefined,
+                lte: to ? new Date(to) : undefined
+              }
+            : undefined,
         OR: search
           ? [
               { number: { contains: search, mode: 'insensitive' } },
@@ -80,7 +88,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
     return Promise.all(
       invoices.map(async (inv) => {
-        const totals = computeInvoiceTotals(inv, inv.taxConfig as Record<string, number> ?? {});
+        const totals = computeInvoiceTotals(inv, (inv.taxConfig as Record<string, number>) ?? {});
         const statusResolved = resolveStatus(inv, totals);
         if (statusResolved !== inv.status) {
           await app.prisma.invoice.update({ where: { id: inv.id }, data: { status: statusResolved } });
@@ -100,9 +108,12 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
     if (!user) {
       return reply.code(400).send({ message: 'User missing' });
     }
+
     const number = await nextInvoiceNumber(user.id, app.prisma, user.invoicePrefix);
     const baseTax = normalizeTaxConfig(user.taxSettings) || { GST: 0.05, QST: 0.09975 };
-    const invoiceTax = Object.keys(data.taxConfig ?? {}).length ? normalizeTaxConfig(data.taxConfig) : baseTax;
+    const invoiceTax =
+      Object.keys(data.taxConfig ?? {}).length ? normalizeTaxConfig(data.taxConfig) : baseTax;
+
     const created = await app.prisma.invoice.create({
       data: {
         userId: user.id,
@@ -128,7 +139,11 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       },
       include: { items: true, payments: true, client: true, user: true }
     });
-    const totals = computeInvoiceTotals(created, created.taxConfig as Record<string, number> ?? {});
+
+    const totals = computeInvoiceTotals(
+      created,
+      (created.taxConfig as Record<string, number>) ?? {}
+    );
     const statusResolved = resolveStatus(created, totals);
     if (statusResolved !== created.status) {
       await app.prisma.invoice.update({ where: { id: created.id }, data: { status: statusResolved } });
@@ -146,7 +161,10 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
   app.put('/invoices/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const data = invoiceSchema.partial().parse(request.body);
-    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id }, include: { items: true } });
+    const existing = await app.prisma.invoice.findFirst({
+      where: { id, userId: request.user.id },
+      include: { items: true }
+    });
     if (!existing) return reply.code(404).send({ message: 'Invoice not found' });
 
     await app.prisma.invoice.update({
@@ -177,6 +195,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
           : undefined
       }
     });
+
     const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
     return invoice;
@@ -184,7 +203,9 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete('/invoices/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const existing = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id } });
+    const existing = await app.prisma.invoice.findFirst({
+      where: { id, userId: request.user.id }
+    });
     if (!existing) return reply.code(404).send({ message: 'Invoice not found' });
     await app.prisma.invoice.delete({ where: { id } });
     reply.code(204).send();
@@ -201,8 +222,11 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       })
       .parse(request.body);
 
-    const invoice = await app.prisma.invoice.findFirst({ where: { id, userId: request.user.id } });
+    const invoice = await app.prisma.invoice.findFirst({
+      where: { id, userId: request.user.id }
+    });
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
+
     const payment = await app.prisma.payment.create({
       data: {
         invoiceId: id,
@@ -230,6 +254,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
     const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
 
+    // Fonts/VFS setup for pdfmake on server
     const fonts = {
       Roboto: {
         normal: 'Roboto-Regular.ttf',
@@ -245,6 +270,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
     if (vfs) {
       (printer as any).vfs = vfs;
     }
+
     const itemsTable = [
       ['Description', 'Qty', 'Unit Price', 'Total'],
       ...invoice.items.map((item) => [
@@ -256,7 +282,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
     ];
 
     const taxes = Object.entries(invoice.totals.taxes).map(
-      ([label, amount]) => `${label}: $${Number(amount as any).toFixed(2)}`
+      ([label, amount]) => `${label}: $${Number(amount as unknown as number).toFixed(2)}`
     );
 
     const docDefinition = {
@@ -269,15 +295,17 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
         { text: 'Items', style: 'subheader' },
         { table: { body: itemsTable } },
         { text: 'Totals', style: 'subheader', margin: [0, 20, 0, 0] },
-        { ul: [
-          `Subtotal: $${Number(invoice.totals.subtotal as any).toFixed(2)}`,
-          `Discount: $${Number(invoice.totals.discount as any).toFixed(2)}`,
-          ...taxes,
-          `Shipping: $${Number(invoice.totals.shipping as any).toFixed(2)}`,
-          `Total: $${Number(invoice.totals.total as any).toFixed(2)}`,
-          `Payments: $${Number(invoice.totals.payments as any).toFixed(2)}`,
-          `Balance: $${Number(invoice.totals.balance as any).toFixed(2)}`
-        ] }
+        {
+          ul: [
+            `Subtotal: $${Number(invoice.totals.subtotal as unknown as number).toFixed(2)}`,
+            `Discount: $${Number(invoice.totals.discount as unknown as number).toFixed(2)}`,
+            ...taxes,
+            `Shipping: $${Number(invoice.totals.shipping as unknown as number).toFixed(2)}`,
+            `Total: $${Number(invoice.totals.total as unknown as number).toFixed(2)}`,
+            `Payments: $${Number(invoice.totals.payments as unknown as number).toFixed(2)}`,
+            `Balance: $${Number(invoice.totals.balance as unknown as number).toFixed(2)}`
+          ]
+        }
       ],
       styles: {
         header: { fontSize: 18, bold: true },
@@ -285,26 +313,43 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
       }
     };
 
+    // Stream the PDF and respond
+    const pdfDoc = printer.createPdfKitDocument(docDefinition as any);
     const chunks: Buffer[] = [];
-doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-doc.on('end', () => {
-  const pdf = Buffer.concat(chunks);
-  reply.header('Content-Type', 'application/pdf');
-  reply.send(pdf);
-});
-doc.end();
 
+    await new Promise<void>((resolve, reject) => {
+      pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      pdfDoc.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        reply.header('Content-Type', 'application/pdf');
+        reply.header(
+          'Content-Disposition',
+          `inline; filename="${invoice.number}.pdf"`
+        );
+        reply.send(buffer);
+        resolve();
+      });
+      pdfDoc.on('error', (err: unknown) => {
+        request.log.error({ err }, 'invoice pdf generation failed');
+        reject(err);
+      });
+      pdfDoc.end();
+    });
+  });
 
   app.post('/invoices/:id/email', async (request, reply) => {
     const { id } = request.params as { id: string };
     const invoice = await toResponse(id, request.user.id);
     if (!invoice) return reply.code(404).send({ message: 'Invoice not found' });
-    app.log.info({
-      action: 'email-invoice',
-      to: invoice.client.email,
-      invoice: invoice.number,
-      link: `${env.reportBaseUrl}/api/invoices/${invoice.id}/pdf`
-    }, 'Simulated invoice email');
+    app.log.info(
+      {
+        action: 'email-invoice',
+        to: invoice.client.email,
+        invoice: invoice.number,
+        link: `${env.reportBaseUrl}/api/invoices/${invoice.id}/pdf`
+      },
+      'Simulated invoice email'
+    );
     return { message: 'Email queued (simulated)' };
   });
 };
