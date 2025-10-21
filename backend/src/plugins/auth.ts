@@ -29,3 +29,4 @@ declare module 'fastify' {
     };
   }
 }
+export default authPlugin;
