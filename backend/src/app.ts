@@ -1,53 +1,54 @@
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import fs from 'node:fs';
+import rateLimit from '@fastify/rate-limit';
+
 import { env } from './env.js';
-import prismaPlugin from './plugins/prisma.js';
-import authPlugin from './plugins/auth.js';
+import { prismaPlugin } from './plugins/prisma.js';
+import { authPlugin } from './plugins/auth.js';
+
 import authRoutes from './routes/auth.js';
 import clientRoutes from './routes/clients.js';
 import invoiceRoutes from './routes/invoices.js';
 import meRoutes from './routes/me.js';
 import reportRoutes from './routes/reports.js';
 
-export const buildApp = async () => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function buildApp() {
   const app = Fastify({ logger: true });
+
+  // very cheap health route (no DB touch)
+  app.get('/healthz', async () => ({ ok: true }));
+
   await app.register(prismaPlugin);
   await app.register(authPlugin);
   await app.register(cors, { origin: env.corsOrigin, credentials: true });
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
-    allowList: ['127.0.0.1']
+    allowList: ['127.0.0.1'],
   });
 
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  // serve built frontend if present
   const staticRootCandidates = [
     path.resolve(process.cwd(), 'public'),
-    path.resolve(__dirname, '../../frontend/dist')
+    path.resolve(__dirname, '../../frontend/dist'),
   ];
-  const staticRoot = staticRootCandidates.find((candidate) => fs.existsSync(candidate));
-
+  const staticRoot = staticRootCandidates.find((p) => fs.existsSync(p));
   if (staticRoot) {
-    await app.register(fastifyStatic, {
-      root: staticRoot,
-      prefix: '/'
-    });
+    await app.register(fastifyStatic, { root: staticRoot, prefix: '/' });
     app.setNotFoundHandler((request, reply) => {
-      if (request.raw.method === 'GET') {
-        reply.sendFile('index.html');
-      } else {
-        reply.code(404).send({ message: 'Not Found' });
-      }
+      if (request.raw.method === 'GET') reply.sendFile('index.html');
+      else reply.code(404).send({ message: 'Not Found' });
     });
   }
 
-  app.get('/healthz', async () => ({ ok: true }));
-
+  // API routes
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(meRoutes, { prefix: '/api' });
   await app.register(clientRoutes, { prefix: '/api' });
@@ -55,8 +56,4 @@ export const buildApp = async () => {
   await app.register(reportRoutes, { prefix: '/api' });
 
   return app;
-};
-
-const app = await buildApp();
-
-export default app;
+}
