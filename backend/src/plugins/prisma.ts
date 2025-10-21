@@ -25,3 +25,4 @@ export default fp(async (app) => {
     await prisma.$disconnect();
   });
 });
+export default prismaPlugin;
