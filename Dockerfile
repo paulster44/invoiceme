@@ -33,4 +33,5 @@ COPY --from=build /app/backend/prisma ./prisma
 COPY --from=build /app/frontend/dist ./public
 
 EXPOSE 8080
-CMD ["sh","-c","node dist/index.js || node dist/server.js || node dist/app.js"]
+CMD ["node","dist/index.js"]
+
