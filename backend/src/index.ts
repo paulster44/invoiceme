@@ -1,17 +1,17 @@
-import app from './app';
+import { buildApp } from './app.js';
 
-const port = Number(process.env.PORT) || 8080;
+const port = Number(process.env.PORT || 8080);
 const host = '0.0.0.0';
 
-// very cheap health route (no DB)
-app.get('/healthz', async () => ({ ok: true }));
-
-app.listen({ port, host })
-  .then(() => {
-    // eslint-disable-next-line no-console
-    console.log(`API listening on http://${host}:${port}`);
-  })
-  .catch((err) => {
-    console.error('Failed to start server:', err);
+const start = async () => {
+  const app = await buildApp();
+  try {
+    await app.listen({ port, host });
+    app.log.info(`API listening on http://${host}:${port}`);
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
-  });
+  }
+};
+
+start();
