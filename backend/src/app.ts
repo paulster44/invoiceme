@@ -8,7 +8,7 @@ import rateLimit from '@fastify/rate-limit';
 
 import { env } from './env.js';
 
-// ⬇️ Use default imports (the plugins export default)
+// ⬇️ default imports (matches plugin default-exports below)
 import prismaPlugin from './plugins/prisma.js';
 import authPlugin from './plugins/auth.js';
 
@@ -24,28 +24,25 @@ const __dirname = path.dirname(__filename);
 export async function buildApp() {
   const app = Fastify({ logger: true });
 
-  // cheap health check for Cloud Run
+  // Health check for Cloud Run
   app.get('/healthz', async () => ({ ok: true }));
 
   await app.register(prismaPlugin);
   await app.register(authPlugin);
   await app.register(cors, { origin: env.corsOrigin, credentials: true });
-  await app.register(rateLimit, {
-    max: 100,
-    timeWindow: '1 minute',
-    allowList: ['127.0.0.1'],
-  });
+  await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 
-  // serve built frontend if present
-  const staticRootCandidates = [
+  // Serve built frontend if present
+  const staticCandidates = [
     path.resolve(process.cwd(), 'public'),
     path.resolve(__dirname, '../../frontend/dist'),
   ];
-  const staticRoot = staticRootCandidates.find((p) => fs.existsSync(p));
+  const staticRoot = staticCandidates.find((p) => fs.existsSync(p));
   if (staticRoot) {
     await app.register(fastifyStatic, { root: staticRoot, prefix: '/' });
-    app.setNotFoundHandler((request, reply) => {
-      if (request.raw.method === 'GET') reply.sendFile('index.html');
+    // SPA fallback
+    app.setNotFoundHandler((req, reply) => {
+      if (req.raw.method === 'GET') reply.sendFile('index.html');
       else reply.code(404).send({ message: 'Not Found' });
     });
   }
