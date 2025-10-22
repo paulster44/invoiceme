@@ -58,4 +58,16 @@ export async function buildApp() {
       else reply.code(404).send({ message: 'Not Found' });
     });
   } else {
+    // lightweight root so Cloud Run has *something* on GET /
+    app.get('/', async () => ({ ok: true }));
+  }
 
+  // API routes
+  await app.register(authRoutes, { prefix: '/api/auth' });
+  await app.register(meRoutes, { prefix: '/api' });
+  await app.register(clientRoutes, { prefix: '/api' });
+  await app.register(invoiceRoutes, { prefix: '/api' });
+  await app.register(reportRoutes, { prefix: '/api' });
+
+  return app;
+}
