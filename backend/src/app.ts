@@ -7,8 +7,8 @@ import fastifyStatic from '@fastify/static';
 import rateLimit from '@fastify/rate-limit';
 
 import { env } from './env.js';
-import prismaPlugin from './plugins/prisma.js';
-import authPlugin from './plugins/auth.js';
+import prismaPlugin from './plugins/prisma.js'; // default export
+import authPlugin from './plugins/auth.js';     // default export
 
 import authRoutes from './routes/auth.js';
 import clientRoutes from './routes/clients.js';
@@ -22,29 +22,36 @@ const __dirname = path.dirname(__filename);
 export async function buildApp() {
   const app = Fastify({ logger: true });
 
-  // very cheap health route (no DB touch)
+  // Cheap health route first so Cloud Run startup probes pass
   app.get('/healthz', async () => ({ ok: true }));
 
-  // plugins
-  await app.register(prismaPlugin);
-  await app.register(authPlugin);
+  // Register plugins, but don't let failures crash container
+  try {
+    await app.register(prismaPlugin);
+  } catch (err) {
+    app.log.error({ err }, 'Prisma plugin failed to register. DB routes may fail.');
+  }
+
+  try {
+    await app.register(authPlugin);
+  } catch (err) {
+    app.log.error({ err }, 'Auth plugin failed to register. Auth may fail.');
+  }
+
   await app.register(cors, { origin: env.corsOrigin, credentials: true });
+
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
     allowList: ['127.0.0.1'],
   });
 
-  // serve built frontend if present
+  // Serve built frontend if present
   const staticRootCandidates = [
     path.resolve(process.cwd(), 'public'),
-    path.resolve(__dirname, '../public'),
     path.resolve(__dirname, '../../frontend/dist'),
   ];
-  const staticRoot = staticRootCandidates.find((p) => {
-    try { return fs.existsSync(p); } catch { return false; }
-  });
-
+  const staticRoot = staticRootCandidates.find((p) => fs.existsSync(p));
   if (staticRoot) {
     await app.register(fastifyStatic, { root: staticRoot, prefix: '/' });
     // SPA fallback
@@ -63,5 +70,3 @@ export async function buildApp() {
 
   return app;
 }
-
-export default buildApp;
