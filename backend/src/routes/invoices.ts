@@ -346,7 +346,7 @@ const invoicesRoutes: FastifyPluginAsync = async (app) => {
         action: 'email-invoice',
         to: invoice.client.email,
         invoice: invoice.number,
-        link: `${env.reportBaseUrl}/api/invoices/${invoice.id}/pdf`
+        link: `${env.REPORT_BASE_URL}/api/invoices/${invoice.id}/pdf`
       },
       'Simulated invoice email'
     );
