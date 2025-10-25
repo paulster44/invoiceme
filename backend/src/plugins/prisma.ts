@@ -5,7 +5,7 @@ import { env } from '../env.js';
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: env.databaseUrl
+      url: env.DATABASE_URL!
     }
   }
 });
