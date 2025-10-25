@@ -1,31 +1,31 @@
+// backend/src/plugins/auth.ts
 import fp from 'fastify-plugin';
-import jwt from '@fastify/jwt';
-import { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
+import fastifyJwt from '@fastify/jwt';
 import { env } from '../env.js';
 
-export default fp(async (app) => {
-  await app.register(jwt, {
-    secret: env.JWT_SECRET
-  });
+declare module 'fastify' {
+  interface FastifyInstance {
+    authenticate: (request: any, reply: any) => Promise<void>;
+  }
+}
 
-  app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
+const authPlugin: FastifyPluginAsync = fp(async (app) => {
+  const secret = env.JWT_SECRET;
+  if (!secret) {
+    app.log.error('JWT_SECRET is not set');
+    throw new Error('JWT_SECRET is required');
+  }
+
+  await app.register(fastifyJwt, { secret });
+
+  app.decorate('authenticate', async (request, reply) => {
     try {
       await request.jwtVerify();
-    } catch (err) {
-      reply.send(err);
+    } catch {
+      reply.code(401).send({ message: 'Unauthorized' });
     }
   });
 });
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-  }
-
-  interface FastifyRequest {
-    user: {
-      id: string;
-      email: string;
-    };
-  }
-}
+export default authPlugin;
