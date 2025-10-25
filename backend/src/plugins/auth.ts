@@ -5,7 +5,7 @@ import { env } from '../env.js';
 
 export default fp(async (app) => {
   await app.register(jwt, {
-    secret: env.jwtSecret
+    secret: env.JWT_SECRET
   });
 
   app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
